@@ -57,7 +57,10 @@ plus: http https chrome chrome-extension weapp 上述协议才允许跨域 (未�
 1. no-store: 彻底不缓存
 2. no-transform: 告诉代理服务器不要操作内容
  
-## Etag Last-Modified 协商缓存 (max-age设置特别长 )
+上面的 expires 和 cache-control 都会访问本地缓存直接验证看是否过期，如果没过期直接使用本地缓存，并返回 200。
+但如果设置了 no-cache 和 no-store 则本地缓存会被忽略，会去请求服务器验证资源是否更新，如果没更新才继续使用本地缓存，此时返回的是 304，这就是协商缓存。
+
+## Etag Last-Modified 协商缓存 
 
 在设置no-cache时，通过上述两项询问服务器是否使用缓存 304
 
