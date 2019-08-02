@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--<meta name="viewport" content="">-->
+    <title>HTTP-learn</title>
+</head>
+<body>
+<h3>Accept</h3>
+<form action="/form" id='form' method="post" enctype="multipart/form-data">
+    <input name="name" type="text">
+    <input type="password" name="password">
+    <input type="file" name="file">
+    <input type="submit">
+</form>
+</body>
+<script>
+    // var xhr = new XMLHttpRequest()
+    // xhr.open('GET', 'http://127.0.0.1:8887')
+    // // 使用localhost代替127.0.0.1同样会报跨域错误
+    // // 注意协议不能缺失
+    // xhr.send()
+
+    // ajax传输数据
+    var form = document.getElementById("form")
+    form.addEventListener('submit', function (e) {
+        e.preventDefault()
+        var formData = new FormData(form)
+        fetch('/form', {
+            method: 'POST',
+            body: formData
+        })
+    })
+</script>
+<!--<script src="/script.js"></script>-->
+</html>
