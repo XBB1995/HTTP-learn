@@ -18,12 +18,104 @@
 5. 推送 Server Push （Link 属性）
 +  ...
 
+## 前后端通信的三种方式
+1. AJAX 原生(XMLHttpRequest)
+
+       // 使用原生方法创建ajax时，考虑兼容性问题
+       var xhr = XMLHttpRequest
+           ? new XMLHttpRequest()
+           : new ActiveXObject('Microsoft.XMLHTTP')
+       var url = ''
+       xhr.open('GET', url, true)
+       // 或者POST 大写！
+       // POST需要设置请求头setRequestHeader('content-type','application/x-www-form-urlencoded')
+       xhr.send()
+       // 接收状态码
+       xhr.onload = function () {
+           // 成功或使用缓存
+           if (xhr.status === 200 || xhr.status === 304) {
+               var res = xhr.responseText
+               res = JSON.parse(res)
+               // 成功和失败的回调
+                  function succ(){}
+               function error(){}
+               succ.call(xhr,res)
+               error.call(xhr,res)
+           }
+       }
+
+2. WebSocket   https=>wss/http=>ws
+
+        var ws = new WebSocket('wss://echo.websocket.org')
+        ws.onopen = function (evt) {
+            ws.send('Hello!')
+        }
+        ws.onmessage = function (evt) {
+            ws.close()
+        }
+        ws.onclose = function (evt) {
+            console.log("WebSocket closed.")
+        }
+
+3. CORS 跨域资源共享 fetch 
+
+        // 参数通过服务端设置
+        // 跨域后台设置
+        res.writeHead(200, {
+            'Access-Control-Allow-Credentials': 'true',     // 后端允许发送Cookie
+            'Access-Control-Allow-Origin': 'http://www.demo1.com',    // 允许访问的域（协议+域名+端口）
+            'Set-Cookie': 'l=a123456;Path=/;Domain=www.demo2.com;HttpOnly'   // HttpOnly:脚本无法读取cookie
+        });
+        fetch('some/url', {
+            method: 'get'
+        }).then(function (response) {
+    
+        }).catch(function (err) {
+    
+        })
+
 ## 跨域 cross-domain
 1. JSONP
+
+       var script = document.createElement('script')
+       script.type = 'text/javascript'
+       // 传参并指定回调执行函数为onBack
+       script.src = 'url' + 'login?user=admin&callback=onBack'
+       document.head.appendChild(script)
+       function onBack(res) {
+           console.log(JSON.stringify(res));
+       }
+       
 2. CORS
 3. nginx代理
 4. 空iframe+form
-5. 设置document.domain
+5. 设置document.domain + iframe
+
+       // 父子窗口都设置 必须在同一个主域下
+       // contentWindow注意这个属性 能获取到iframe
+       // document.domain = '主域.com'
+      
+6. location.hash +iframe
+7. websocket
+8. postMessage 接收信息message的API
+
+       中文方式表示：
+       
+       ①寄信人foo给收信人bar寄信
+       收信人.postMessage('信的内容',收信人的地址(URL))
+       
+       window.addEventListener('回信的内容',校验回调函数)
+       
+       ②收信人bar给寄信人foo回信
+       window.addEventListener('信的内容',校验回调函数)
+       参数：
+       event.origin:寄信人地址URL
+       event.source:寄信人对象
+       event.data:信内容
+       
+       寄信人.postMessage('回信的内容',寄信人的地址(URL))
+       
+9. nodejs中间件
 
 ### 同源策略下 请求不同源的资源 如端口号不同时
 
