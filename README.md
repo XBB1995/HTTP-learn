@@ -5,7 +5,11 @@
  1. 增加命令和响应码
 + HTTP1.1
  1. 允许持久连接
- 2.  pipeline
+ 2.  pipeline 打包发送 保持顺序
+     1. 无管道化的例子
+     发送顺序：req1->res1 -> req2->res2 -> req3->res3
+     2. 管道化的例子 请求和响应都打包
+     发送顺序：req1->req2->req3 -> res1->res2->res3
  3.  增加host及其他指令
 + 在HTTP1.1 基础上HTTPS 增加安全性 使用字符串传输
 1. HTTP + SSL
