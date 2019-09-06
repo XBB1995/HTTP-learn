@@ -1,4 +1,4 @@
-# HTTP-learn-demo
+# HTTP-learn
 
 ## HTTP的发展历史
 + HTTP1.0
@@ -14,6 +14,8 @@
 + 在HTTP1.1 基础上HTTPS 增加安全性 使用字符串传输
 1. HTTP + SSL
 2. 加密 公钥私钥 握手时传递 => 主密钥
+3. 在客户端使用公钥加密客户端密钥，服务器端用私钥解密得到客户端密钥
+4. HTTPS能够实现身份认证、消息完整性确认及加密传输的功能
 + HTTP2.0
 1. 所有数据用二进制传输
 2. 分侦传输
@@ -24,6 +26,7 @@
 
 ## 前后端通信的三种方式
 1. AJAX 原生(XMLHttpRequest)
+示例1：
 
        // 使用原生方法创建ajax时，考虑兼容性问题
        var xhr = XMLHttpRequest
@@ -47,6 +50,45 @@
                error.call(xhr,res)
            }
        }
+示例2：
+        
+    (() => {
+    let data = {
+        method: "post",
+        a: "abc",
+        b: 123
+    }
+
+    function transformData(data) {
+        let newData = []
+        for (let idx in data) {
+            newData.push(encodeURIComponent(idx) + "=" + encodeURIComponent(data[idx]))
+        }
+        return newData.join("&")
+    }
+
+    let xhr = new XMLHttpRequest()
+    // 三个参数
+    // 1.请求使用方法名
+    // 2.请求路径 接口地址
+    // 3.请求是否异步
+    xhr.open("post", '/api/get', true)
+    // 设置open参数并不会发送
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200 || xhr.status === 304) {
+                console.log(xhr.responseText);
+            } else {
+                throw new Error("error")
+            }
+        }
+    }
+    // 设置携带cookie 需要后端ACAC配合 才能跨域携带cookie
+    xhr.withCredentials = true
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
+    xhr.send(transformData(data))
+    })()
+
 
 2. WebSocket   https=>wss/http=>ws
 
@@ -68,7 +110,9 @@
         res.writeHead(200, {
             'Access-Control-Allow-Credentials': 'true',     // 后端允许发送Cookie
             'Access-Control-Allow-Origin': 'http://www.demo1.com',    // 允许访问的域（协议+域名+端口）
-            'Set-Cookie': 'l=a123456;Path=/;Domain=www.demo2.com;HttpOnly'   // HttpOnly:脚本无法读取cookie
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Headers': 'acaHeader',
+            'Set-Cookie': 'l=a123456;Path=/;Domain=www.demo2.com;HttpOnly'   // HttpOnly:脚本无法读取cookie 防范XSS
         });
         fetch('some/url', {
             method: 'get'
@@ -91,9 +135,33 @@
        }
        
 2. CORS
-3. nginx代理
-4. 空iframe+form
-5. 设置document.domain + iframe
+3. nginx代理 示意图 <待补充>
+
+![image](https://images2018.cnblogs.com/blog/461976/201808/461976-20180829202604273-241278886.png)
+
+       
+       server {
+           listen 3000;
+           server_name a.test.com
+
+           location / {
+               root /test-static-app;
+               index index.html index.htm;
+           }
+
+           location /api {
+            proxy_pass https://b.test.com;
+            // 实现了cookie的传递与回写
+            proxy_cookie_domain b.test.com a.test.com;
+           }
+
+           error_page 500 502 503 504  /50x.html;
+           location = /50x.html {
+               root html;
+           }
+       }
+4. 空 iframe + window.name 需要借助一个同源窗口实现跳转
+5. 设置 document.domain + iframe
 
        // 父子窗口都设置 必须在同一个主域下
        // contentWindow注意这个属性 能获取到iframe
@@ -134,7 +202,7 @@ demo中通过localhost:8888访问localhost:8887中的资源 报错
           'Access-Control-Allow-Methods': 'POST, GET, PUT',
           // 在上次请求成功后 保持一段时间不同再发预请求
           'Access-Control-Max-Age': '1000'
-+ 注意GET/POST/HEADER是简单请求 不需要预请求
++ 注意GET/POST/HEAD是简单请求 不需要预请求
 + 其余请求均需要预请求 返回204后再发送请求
 
 plus: http https chrome chrome-extension weapp 上述协议才允许跨域 (未验证)
@@ -172,10 +240,11 @@ plus: http https chrome chrome-extension weapp 上述协议才允许跨域 (未�
 2. 键值对 
 3. domain 设置域名 cookie不能跨域设置！
 4. 设置方式 数组
- +             response.writeHead(200, {
+
+              response.writeHead(200, {
                    'Content-Type': 'text/html',
                    // 通过数组传入多个cookie max-age=秒
-                   'Set-Cookie': ['name=XBB; secure', 'id=1; HttpOnly']
+                   'Set-Cookie': ['name=XBB; Secure; Domain=somecom.cn', 'id=1; HttpOnly']
                })
  + Secure 只在https协议下发送
  + HttpOnly 无法通过document.cookie访问 避免 CSRF攻击
@@ -188,3 +257,5 @@ plus: http https chrome chrome-extension weapp 上述协议才允许跨域 (未�
 ## Redirect 
 1. 301 永久跳转 使用时要谨慎 如果过客户端不清除缓存 则服务端的修改永远无法生效
 2. 302 临时跳转 每次跳转前都会询问服务器 
+3. 303 强制将POST请求转变为GET
+4. 307 遵循实际上的302规定，即禁止POST转为GET
